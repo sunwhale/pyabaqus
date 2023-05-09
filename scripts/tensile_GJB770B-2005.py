@@ -10,24 +10,24 @@ from abaqusConstants import (CLOCKWISE, TWO_D_PLANAR, THREE_D, MIDDLE_SURFACE, F
 from caeModules import mesh
 
 
-def create_sketch(model_name, sketch_name, l1, l2, l3, l4):
+def create_sketch(model_name, sketch_name, width, length, gauge, radius):
     s = mdb.models[model_name].ConstrainedSketch(name=sketch_name, sheetSize=200.0)
-    s.Line(point1=(0.0, 0.0), point2=((l2 - l3) / 2.0, 0.0))
-    s.ArcByCenterEnds(center=((l2 - l3) / 2 + l4, 0.0), point1=((l2 - l3) / 2.0, 0.0), point2=((l2 - l3) / 2 + l4, l4),
+    s.Line(point1=(-length / 2, -width / 2), point2=(-gauge / 2, -width / 2))
+    s.ArcByCenterEnds(center=(radius - gauge / 2, -width / 2), point1=(-gauge / 2, -width / 2), point2=(radius - gauge / 2, radius - width / 2),
                       direction=CLOCKWISE)
-    s.Line(point1=((l2 - l3) / 2 + l4, l4), point2=((l2 + l3) / 2 - l4, l4))
-    s.ArcByCenterEnds(center=((l2 + l3) / 2 - l4, 0.0), point1=((l2 + l3) / 2 - l4, l4), point2=((l2 + l3) / 2, 0.0),
+    s.Line(point1=(radius - gauge / 2, radius - width / 2), point2=(gauge / 2 - radius, radius - width / 2))
+    s.ArcByCenterEnds(center=(gauge / 2 - radius, -width / 2), point1=(gauge / 2 - radius, radius - width / 2), point2=(gauge / 2, -width / 2),
                       direction=CLOCKWISE)
-    s.Line(point1=((l2 + l3) / 2, 0.0), point2=(l2, 0.0))
-    s.Line(point1=(l2, 0.0), point2=(l2, l1))
-    s.Line(point1=(l2, l1), point2=((l2 + l3) / 2, l1))
-    s.ArcByCenterEnds(center=((l2 + l3) / 2 - l4, l1), point1=((l2 + l3) / 2, l1), point2=((l2 + l3) / 2 - l4, l1 - l4),
+    s.Line(point1=(gauge / 2, -width / 2), point2=(length / 2, -width / 2))
+    s.Line(point1=(length / 2, -width / 2), point2=(length / 2, width / 2))
+    s.Line(point1=(length / 2, width / 2), point2=(gauge / 2, width / 2))
+    s.ArcByCenterEnds(center=(gauge / 2 - radius, width / 2), point1=(gauge / 2, width / 2), point2=(gauge / 2 - radius, width / 2 - radius),
                       direction=CLOCKWISE)
-    s.Line(point1=((l2 + l3) / 2 - l4, l1 - l4), point2=((l2 - l3) / 2 + l4, l1 - l4))
-    s.ArcByCenterEnds(center=((l2 - l3) / 2 + l4, l1), point1=((l2 - l3) / 2 + l4, l1 - l4),
-                      point2=((l2 - l3) / 2.0, l1), direction=CLOCKWISE)
-    s.Line(point1=((l2 - l3) / 2.0, l1), point2=(0.0, l1))
-    s.Line(point1=(0.0, l1), point2=(0.0, 0.0))
+    s.Line(point1=(gauge / 2 - radius, width / 2 - radius), point2=(radius - gauge / 2, width / 2 - radius))
+    s.ArcByCenterEnds(center=(radius - gauge / 2, width / 2), point1=(radius - gauge / 2, width / 2 - radius),
+                      point2=(-gauge / 2, width / 2), direction=CLOCKWISE)
+    s.Line(point1=(-gauge / 2, width / 2), point2=(-length / 2, width / 2))
+    s.Line(point1=(-length / 2, width / 2), point2=(-length / 2, -width / 2))
 
 
 def create_part(model_name, sketch_name, part_name, dimension, thickness=1.0):
@@ -43,14 +43,14 @@ def create_part(model_name, sketch_name, part_name, dimension, thickness=1.0):
         raise KeyError('Unsupported dimension %s' % dimension)
 
 
-def partition_part_by_datum_plane(model_name, part_name, l1, l2, l3, l4, dimension):
+def partition_part_by_datum_plane(model_name, part_name, length, gauge, radius, dimension):
     p = mdb.models[model_name].parts[part_name]
-    p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=l1 / 2.0)
-    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=(l2 - l3) / 2.0 * 4.0 / 5.0)
-    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=((l2 - l3) / 2.0 + l4))
-    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=((l2 + l3) / 2.0 - l4))
-    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=l2 * 100.0 / 120.0)
-    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=l2 / 2.0)
+    p.DatumPlaneByPrincipalPlane(principalPlane=XZPLANE, offset=0)
+    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=-(gauge * 2 / 5) - length * 1 / 10)
+    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=radius - gauge / 2)
+    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=0)
+    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=gauge / 2 - radius)
+    p.DatumPlaneByPrincipalPlane(principalPlane=YZPLANE, offset=(gauge * 2 / 5) + length * 1 / 10)
 
     if dimension == 2:
         for key, datum in p.datums.items():
@@ -90,26 +90,35 @@ def create_output(model_name, step_name, output_name, time_interval):
                                               timeInterval=time_interval)
 
 
-def create_sets(model_name, part_name, set_fixed_name, set_tensile_name, l1, l2, l3, l4, thickness, dimension):
+def create_sets(model_name, part_name, set_fixed_name, set_tensile_name, width, length, gauge, radius, thickness, dimension):
     p = mdb.models[model_name].parts[part_name]
+    tol = 1e-3
+    v = p.vertices.getByBoundingBox(-tol, -tol, -tol, tol, tol, tol)
+    p.Set(vertices=v, name='Set-Origin')
 
     if dimension == 2:
-        e = p.edges.getByBoundingBox((l2 - l3) / 2.0, 0, 0, l2 / 2, l4, thickness)
-        e += p.edges.getByBoundingBox((l2 - l3) / 2.0, l1 - l4, 0, l2 / 2, l1, thickness)
+        e = p.edges.getByBoundingBox(-gauge / 2, -width / 2, 0, radius - gauge / 2, radius - width / 2, thickness)
+        e += p.edges.getByBoundingBox(-gauge / 2, width / 2 - radius, 0, radius - gauge / 2, width / 2, thickness)
         p.Set(edges=e, name=set_fixed_name)
 
-        e = p.edges.getByBoundingBox(l2 / 2, 0, 0, (l2 + l3) / 2.0, l4, thickness)
-        e += p.edges.getByBoundingBox(l2 / 2, l1 - l4, 0, (l2 + l3) / 2.0, l1, thickness)
+        e = p.edges.getByBoundingBox(gauge / 2 - radius, -length / 2, 0, gauge / 2, radius - width / 2, thickness)
+        e += p.edges.getByBoundingBox(gauge / 2 - radius, width / 2 - radius, 0, gauge / 2, width / 2, thickness)
         p.Set(edges=e, name=set_tensile_name)
 
+        e = p.edges.getByBoundingBox(-tol, -width / 2 - tol, -tol, tol, width / 2 + tol, thickness + tol)
+        p.Set(edges=e, name='Set-Middle-Plane')
+
     elif dimension == 3:
-        f = p.faces.getByBoundingBox((l2 - l3) / 2.0, 0, 0, l2 / 2, l4, thickness)
-        f += p.faces.getByBoundingBox((l2 - l3) / 2.0, l1 - l4, 0, l2 / 2, l1, thickness)
+        f = p.faces.getByBoundingBox(-gauge / 2, -width / 2, 0, radius - gauge / 2, radius - width / 2, thickness)
+        f += p.faces.getByBoundingBox(-gauge / 2, width / 2 - radius, 0, radius - gauge / 2, width / 2, thickness)
         p.Set(faces=f, name=set_fixed_name)
 
-        f = p.faces.getByBoundingBox(l2 / 2, 0, 0, (l2 + l3) / 2.0, l4, thickness)
-        f += p.faces.getByBoundingBox(l2 / 2, l1 - l4, 0, (l2 + l3) / 2.0, l1, thickness)
+        f = p.faces.getByBoundingBox(gauge / 2 - radius, -length / 2, 0, gauge / 2, radius - width / 2, thickness)
+        f += p.faces.getByBoundingBox(gauge / 2 - radius, width / 2 - radius, 0, gauge / 2, width / 2, thickness)
         p.Set(faces=f, name=set_tensile_name)
+
+        f = p.faces.getByBoundingBox(-tol, -width / 2 - tol, -tol, tol, width / 2 + tol, thickness + tol)
+        p.Set(edges=f, name='Set-Middle-Plane')
 
     else:
         raise KeyError('Unsupported dimension %s' % dimension)
@@ -129,8 +138,7 @@ def create_bc(model_name, assembly_name, amp_name, step_name, set_fixed_name, se
 
     region = a.instances[assembly_name].sets[set_tensile_name]
     mdb.models[model_name].DisplacementBC(name=bc_tensile_name, createStepName=step_name,
-                                          region=region, u1=displacement, u2=UNSET, ur3=UNSET, amplitude=amp_name,
-                                          fixed=OFF,
+                                          region=region, u1=displacement, u2=UNSET, ur3=UNSET, amplitude=UNSET, fixed=OFF,
                                           distributionType=UNIFORM, fieldName='', localCsys=None)
 
 
@@ -164,7 +172,8 @@ def create_job(model_name, job_name, cae_name):
     mdb.saveAs(pathName=cae_name)
 
 
-def create_material_Ti6Al4V(model_name):
+def create_material_Ti6AradiusV(model_name):
+    material_name = 'Ti-6Al-4V'
     density = 4.43e-9
     E = 115000
     nu = 0.343
@@ -182,7 +191,7 @@ def create_material_Ti6Al4V(model_name):
     mdb.models[model_name].materials[material_name].Density(table=((density,),))
     mdb.models[model_name].materials[material_name].Elastic(table=((E, nu),))
     mdb.models[model_name].materials[material_name].Plastic(table=plastic_table)
-    return 'Ti-6Al-4V'
+    return material_name
 
 
 if __name__ == "__main__":
@@ -190,10 +199,10 @@ if __name__ == "__main__":
 
     # sketch
     sketch_name = 'Sketch-1'
-    l1 = 22
-    l2 = 120
-    l3 = 70
-    l4 = 6
+    width = 22
+    length = 120
+    gauge = 70
+    radius = 6
     thickness = 10
 
     # part
@@ -208,7 +217,7 @@ if __name__ == "__main__":
     element_size = 1
 
     # material
-    material_name = create_material_Ti6Al4V(model_name)
+    material_name = create_material_Ti6AradiusV(model_name)
 
     # section
     section_name = 'Section-1'
@@ -239,13 +248,13 @@ if __name__ == "__main__":
     job_name = 'Job-1'
     cae_name = 'tensile.cae'
 
-    create_sketch(model_name, sketch_name, l1, l2, l3, l4)
+    create_sketch(model_name, sketch_name, width, length, gauge, radius)
 
     create_part(model_name, sketch_name, part_name, dimension, thickness)
 
-    partition_part_by_datum_plane(model_name, part_name, l1, l2, l3, l4, dimension)
+    partition_part_by_datum_plane(model_name, part_name, length, gauge, radius, dimension)
 
-    create_sets(model_name, part_name, set_fixed_name, set_tensile_name, l1, l2, l3, l4, thickness, dimension)
+    create_sets(model_name, part_name, set_fixed_name, set_tensile_name, width, length, gauge, radius, thickness, dimension)
 
     create_mesh(model_name, part_name, element_size, dimension)
 
